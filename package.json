@@ -34,6 +34,14 @@
     "LICENSE"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ThreeBody6666/dsh-im-hub.git"
+  },
+  "homepage": "https://github.com/ThreeBody6666/dsh-im-hub",
+  "bugs": {
+    "url": "https://github.com/ThreeBody6666/dsh-im-hub/issues"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
