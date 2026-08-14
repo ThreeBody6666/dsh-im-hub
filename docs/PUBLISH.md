@@ -10,6 +10,10 @@
 | 0xsline/awesome-deepseek-harness 收录 | ✅ PR #107 | https://github.com/0xsline/awesome-deepseek-harness/pull/107 |
 | Alex-Yanggg/awesome-DSH-plugin 收录 | ✅ PR #34 | https://github.com/Alex-Yanggg/awesome-DSH-plugin/pull/34 |
 
+## 更新记录
+
+- `114fec7` — 新增 **Lark 国际版适配器**(`adapters.lark`,open.larksuite.com):与飞书共用同一套长连接/protobuf 实现,仅切换 base URL,零代码重复。
+
 ## 说明
 
 - 3 个收录 PR 均已附带双语描述(英文 README + 中文 README/CATALOG),符合各列表的贡献规范。
