@@ -1,0 +1,20 @@
+# dsh-im-gateway bundle patch: insert the IM gateway plugin row.
+#
+# The row is disabled by default. Enable it from the profile's own
+# cordis.patch.yml (or a --patch overlay) with your adapter credentials, e.g.:
+#
+#   - id: im-gateway
+#     disabled: false
+#     config:
+#       adapters:
+#         telegram:
+#           enabled: true
+#           token: '123456:ABC-DEF...'
+#
+# See README.zh.md / README.md for the full configuration reference.
+
+- insert:
+    - id: im-gateway
+      name: 'dsh-im-gateway'
+      disabled: true
+      config: {}

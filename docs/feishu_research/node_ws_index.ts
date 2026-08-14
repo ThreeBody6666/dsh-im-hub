@@ -1,0 +1,737 @@
+import qs from 'querystring';
+import WebSocket from 'ws';
+import { EventDispatcher } from '@node-sdk/dispatcher/event';
+import { assert, formatDomain, buildUserAgent } from '@node-sdk/utils';
+import {
+  ClientAssertionError,
+  ERR_CODE_APP_SECRET_AND_CLIENT_ASSERTION_EMPTY,
+  ERR_CODE_CLIENT_ASSERTION_TOKEN_EMPTY,
+  X_TARGET_SERVICE,
+  buildProxyUrl,
+  extractAudFromUrl,
+} from '@node-sdk/client/client-assertion';
+import { defaultLogger } from '@node-sdk/logger/default-logger';
+import { LoggerProxy } from '@node-sdk/logger/logger-proxy';
+import { Domain, Logger, LoggerLevel } from '@node-sdk/typings';
+import defaultHttpInstance from '@node-sdk/http';
+import { HttpInstance } from '@node-sdk/typings/http';
+import * as protoBuf from './proto-buf';
+import { WSConfig } from './ws-config';
+import { DataCache } from './data-cache';
+import { ErrorCode, FrameType, HeaderKey, HttpStatusCode, MessageType } from './enum';
+import { pbbp2 } from './proto-buf/pbbp2';
+import { IConstructorParams, ConnectResult, WSConnectionStatus, WSConnectionState } from './types';
+
+export type { WSConfigOverrides, WSConnectionStatus, WSConnectionState } from './types';
+
+export class WSClient {
+  private wsConfig = new WSConfig();
+
+  private logger: Logger;
+
+  private dataCache: DataCache;
+
+  private httpInstance: HttpInstance;
+
+  private eventDispatcher?: EventDispatcher;
+
+  private pingInterval?: NodeJS.Timeout;
+
+  private reconnectInterval?: NodeJS.Timeout;
+
+  private reconnectGeneration: number = 0;
+
+  private isConnecting: boolean = false;
+
+  private reconnectInfo = {
+    lastConnectTime: 0,
+    nextConnectTime: 0,
+  }
+
+  private agent?: any;
+
+  /** User-supplied state-transition callbacks. All optional. */
+  private onReady?: () => void;
+  private onError?: (err: Error) => void;
+  private onReconnecting?: () => void;
+  private onReconnected?: () => void;
+
+  private readonly userAgent: string;
+
+  /** True if the WS has ever connected successfully in this client's
+   *  lifetime — used to distinguish first-connect from reconnect. */
+  private hasEverConnected = false;
+
+  /** Seconds. Liveness watchdog window; 0 / undefined = disabled. */
+  private readonly pingTimeoutSec: number;
+
+  /** Milliseconds. WS handshake timer cap; 0 / undefined = disabled. */
+  private readonly handshakeTimeoutMs?: number;
+
+  /** Liveness watchdog handle. */
+  private livenessTimer?: NodeJS.Timeout;
+
+  /**
+   * Set true when the client gives up (fatal pull error or exhausted retries)
+   * and fires `onError`. Cleared on the next `start()`. Used to surface
+   * `state: 'failed'` in {@link getConnectionStatus}.
+   */
+  private terminalError = false;
+
+  /**
+   * Consecutive reconnect attempts in the current loop. Incremented in
+   * loopReConnect, reset to 0 on a successful connect.
+   */
+  private currentReconnectAttempts = 0;
+
+  constructor(params: IConstructorParams) {
+    const {
+      appId,
+      appSecret,
+      clientAssertionProvider,
+      agent,
+      domain = Domain.Feishu,
+      httpInstance = defaultHttpInstance,
+      loggerLevel = LoggerLevel.info,
+      logger = defaultLogger,
+      autoReconnect = true,
+      source,
+      extraUaTags,
+      onReady,
+      onError,
+      onReconnecting,
+      onReconnected,
+      handshakeTimeoutMs,
+      wsConfig: userWsConfig,
+    } = params;
+
+    this.userAgent = buildUserAgent(source, { extraTags: extraUaTags });
+
+    this.logger = new LoggerProxy(loggerLevel, logger);
+
+    assert(!appId, () => this.logger.error('appId is needed'));
+    // appSecret and clientAssertionProvider are mutually exclusive-or: at
+    // least one is required.
+    if (!appSecret && !clientAssertionProvider) {
+      throw new ClientAssertionError(
+        ERR_CODE_APP_SECRET_AND_CLIENT_ASSERTION_EMPTY,
+        'appSecret or clientAssertionProvider is required'
+      );
+    }
+
+    this.agent = agent;
+    this.dataCache = new DataCache({logger: this.logger});
+    this.httpInstance = httpInstance;
+    this.wsConfig.updateClient({
+      appId,
+      appSecret: appSecret || '',
+      clientAssertionProvider,
+      domain: formatDomain(domain),
+    });
+
+    this.wsConfig.updateWs({
+      autoReconnect
+    })
+
+    this.onReady = onReady;
+    this.onError = onError;
+    this.onReconnecting = onReconnecting;
+    this.onReconnected = onReconnected;
+
+    this.handshakeTimeoutMs = handshakeTimeoutMs;
+    this.pingTimeoutSec = userWsConfig?.pingTimeout ?? 0;
+  }
+
+  /**
+   * Start the pong watchdog after sending a ping. If no inbound frame
+   * arrives within `pingTimeout` seconds, the server is presumed dead and
+   * the socket is terminated to let the existing 'close' handler run the
+   * standard reconnect flow.
+   *
+   * No-op when `pingTimeout` is unset (preserves original behavior).
+   *
+   * Pair with {@link clearLiveness}, which is called on every inbound
+   * frame to cancel the watchdog (proof of life). We do NOT re-arm on
+   * inbound: re-arming would terminate idle but healthy connections
+   * (e.g. ping every 30s, watchdog 3s → fires 3s after pong while the
+   * connection is fine).
+   */
+  private armLiveness(): void {
+    if (!this.pingTimeoutSec) return;
+    if (this.livenessTimer) clearTimeout(this.livenessTimer);
+    this.livenessTimer = setTimeout(() => {
+      this.livenessTimer = undefined;
+      this.logger.warn(
+        '[ws]',
+        `no pong/inbound within ${this.pingTimeoutSec}s of last ping, terminating to trigger reconnect`,
+      );
+      try { this.wsConfig.getWSInstance()?.terminate(); } catch { /* best effort */ }
+    }, this.pingTimeoutSec * 1000);
+  }
+
+  private clearLiveness(): void {
+    if (this.livenessTimer) {
+      clearTimeout(this.livenessTimer);
+      this.livenessTimer = undefined;
+    }
+  }
+
+  /**
+   * Invoke a user-supplied callback safely: no-op if undefined, swallow any
+   * exception to avoid breaking the WS state machine.
+   */
+  private safeInvoke<A extends unknown[]>(
+    label: string,
+    fn: ((...args: A) => void) | undefined,
+    ...args: A
+  ): void {
+    if (!fn) return;
+    try {
+      fn(...args);
+    } catch (e) {
+      this.logger.error(`[ws] ${label} callback threw`, e);
+    }
+  }
+
+  private async pullConnectConfig(): Promise<ConnectResult> {
+    const {
+      appId,
+      appSecret,
+      clientAssertionProvider,
+      domain,
+    } = this.wsConfig.getClient();
+
+    // Path component of `wsConfig.wsConfigUrl`; needed standalone to build the
+    // GDPR proxy URL.
+    const WS_ENDPOINT_URI = '/callback/ws/endpoint';
+    let url = this.wsConfig.wsConfigUrl;
+    const headers: Record<string, string> = {
+      // consumed by gateway
+      "locale": "zh",
+      "User-Agent": this.userAgent,
+    };
+    const body: Record<string, any> = { AppID: appId };
+
+    try {
+      if (clientAssertionProvider) {
+        // WS endpoint discovery binds the assertion to the OpenAPI domain host.
+        const aud = extractAudFromUrl(domain as string);
+        const assertion = await clientAssertionProvider.retrieveToken(aud);
+        if (!assertion || !assertion.value) {
+          throw new ClientAssertionError(
+            ERR_CODE_CLIENT_ASSERTION_TOKEN_EMPTY,
+            'client assertion token is empty'
+          );
+        }
+        body.AppSecret = '';
+        body.ClientAssertion = assertion.value;
+        if (assertion.targetInfo) {
+          url = buildProxyUrl(assertion.targetInfo, WS_ENDPOINT_URI);
+          headers[X_TARGET_SERVICE] = aud;
+        }
+      } else {
+        body.AppSecret = appSecret;
+      }
+
+      const {
+        code,
+        data: {
+          URL,
+          ClientConfig
+        },
+        msg
+      } = await this.httpInstance.request({
+        method: "post",
+        url,
+        data: body,
+        headers,
+        timeout: 15000,
+      });
+
+      if (code !== ErrorCode.ok) {
+        const reason = code === ErrorCode.system_busy ? 'system busy' : msg;
+        this.logger.error('[ws]', `code: ${code}, ${reason}`);
+        if (code === ErrorCode.internal_error) {
+          return { ok: false, retryable: true };
+        }
+        return {
+          ok: false,
+          retryable: false,
+          error: `pullConnectConfig failed: code=${code}, msg=${reason}`,
+        };
+      }
+
+      const {
+        device_id,
+        service_id
+      } = qs.parse(URL);
+
+      this.wsConfig.updateWs({
+        connectUrl: URL,
+
+        deviceId: device_id as string,
+        serviceId: service_id as string,
+
+        pingInterval: ClientConfig.PingInterval * 1000,
+        reconnectCount: ClientConfig.ReconnectCount,
+        reconnectInterval: ClientConfig.ReconnectInterval * 1000,
+        reconnectNonce: ClientConfig.ReconnectNonce * 1000
+      });
+
+      this.logger.debug('[ws]', `get connect config success, ws url: ${URL}`);
+
+      return { ok: true };
+    } catch(e) {
+      this.logger.error('[ws]', (e as any)?.message || 'system busy');
+      // A credential/config problem (e.g. empty assertion) is not retryable.
+      if (e instanceof ClientAssertionError) {
+        return { ok: false, retryable: false, error: e.message };
+      }
+      return { ok: false, retryable: true };
+    }
+  }
+
+  private connect() {
+    const connectUrl = this.wsConfig.getWS('connectUrl');
+
+    let wsInstance;
+
+    try {
+      const { agent } = this;
+      wsInstance = new WebSocket(connectUrl, { agent });
+    } catch(e) {
+      this.logger.error('[ws]', 'new WebSocket error');
+    }
+
+    if (!wsInstance) {
+      return Promise.resolve(false);
+    }
+
+    return new Promise<boolean>((resolve) => {
+      let settled = false;
+      let timer: NodeJS.Timeout | undefined;
+      const settleOnce = (ok: boolean) => {
+        if (settled) return;
+        settled = true;
+        if (timer) clearTimeout(timer);
+        resolve(ok);
+      };
+
+      // Optional handshake watchdog: if neither 'open' nor 'error' fires
+      // within the configured window (stuck DNS / proxy / NAT path), abort
+      // the attempt and let tryConnect treat it as a retryable failure.
+      if (this.handshakeTimeoutMs && this.handshakeTimeoutMs > 0) {
+        timer = setTimeout(() => {
+          this.logger.error('[ws]', `handshake timeout after ${this.handshakeTimeoutMs}ms`);
+          wsInstance!.removeAllListeners();
+          try { wsInstance!.terminate(); } catch { /* best effort */ }
+          settleOnce(false);
+        }, this.handshakeTimeoutMs);
+      }
+
+      wsInstance.on('open', () => {
+        this.logger.debug('[ws]', 'ws connect success');
+        this.wsConfig.setWSInstance(wsInstance);
+        this.pingLoop();
+        settleOnce(true);
+      });
+      wsInstance.on('error', () => {
+        this.logger.error('[ws]', 'ws connect failed');
+        settleOnce(false);
+      });
+    });
+  }
+
+  private async reConnect(isStart: boolean = false) {
+    if (this.isConnecting && !isStart) {
+      this.logger.debug('[ws]', 'repeat connection');
+      return;
+    }
+
+    this.isConnecting = true;
+
+    // Invalidate any in-flight reconnect loops from previous sessions
+    const currentGeneration = ++this.reconnectGeneration;
+
+    const tryConnect = async (): Promise<ConnectResult> => {
+      this.reconnectInfo.lastConnectTime = Date.now();
+      const pullResult = await this.pullConnectConfig();
+      if (!pullResult.ok) return pullResult;
+      const connected = await this.connect();
+      if (!connected) return { ok: false, retryable: true };
+      this.communicate();
+      return { ok: true };
+    }
+
+    if (this.pingInterval) {
+      clearTimeout(this.pingInterval);
+    }
+
+    if (this.reconnectInterval) {
+      clearTimeout(this.reconnectInterval);
+    }
+
+    const wsInstance = this.wsConfig.getWSInstance();
+
+    if (isStart) {
+      if (wsInstance) {
+        wsInstance?.terminate();
+      }
+      let result: ConnectResult = { ok: false, retryable: true };
+      try {
+        result = await tryConnect();
+      } finally {
+        this.isConnecting = false;
+      }
+      if (result.ok) {
+        this.hasEverConnected = true;
+        this.safeInvoke('onReady', this.onReady);
+      } else if (!result.retryable) {
+        // Non-recoverable error from pullConnectConfig — bail out without retry.
+        // Reset hasEverConnected so a subsequent start() is treated as a fresh
+        // session (onReady fires, not onReconnected).
+        this.hasEverConnected = false;
+        this.terminalError = true;
+        this.safeInvoke('onError', this.onError, new Error(result.error));
+        return;
+      } else {
+        this.logger.error('[ws]', 'connect failed');
+        await this.reConnect();
+      }
+      this.logger.info('[ws]', 'ws client ready');
+      return;
+    }
+
+    const { autoReconnect, reconnectNonce, reconnectCount, reconnectInterval } = this.wsConfig.getWS();
+
+    if (!autoReconnect) {
+      if (!this.hasEverConnected) {
+        this.terminalError = true;
+        this.safeInvoke(
+          'onError',
+          this.onError,
+          new Error('WebSocket connect failed and autoReconnect is disabled'),
+        );
+      }
+      return;
+    }
+
+    this.logger.info('[ws]', 'reconnect');
+    if (this.hasEverConnected) {
+      this.safeInvoke('onReconnecting', this.onReconnecting);
+    }
+
+    if (wsInstance) {
+      wsInstance?.terminate();
+    }
+
+    this.wsConfig.setWSInstance(null);
+
+    const reconnectNonceTime = reconnectNonce ? reconnectNonce * Math.random() : 0
+    this.reconnectInterval = setTimeout(async () => {
+      (async function loopReConnect(this: WSClient, count: number) {
+        // Stale loop — a newer reConnect session has started
+        if (currentGeneration !== this.reconnectGeneration) {
+          return;
+        }
+
+        count++;
+        this.currentReconnectAttempts = count;
+        const result = await tryConnect();
+
+        // Re-check after async operation in case a new session started
+        if (currentGeneration !== this.reconnectGeneration) {
+          return;
+        }
+
+        // if reconnectCount < 0, the reconnect time is infinite
+        if (result.ok) {
+          this.logger.debug('[ws]', 'reconnect success');
+          this.currentReconnectAttempts = 0;
+          if (this.hasEverConnected) {
+            this.safeInvoke('onReconnected', this.onReconnected);
+          } else {
+            this.hasEverConnected = true;
+            this.safeInvoke('onReady', this.onReady);
+          }
+          this.isConnecting = false;
+          return;
+        }
+
+        if (!result.retryable) {
+          // Non-recoverable error — abort the loop, do not schedule another attempt.
+          // Reset hasEverConnected so a subsequent start() is treated as a fresh
+          // session (onReady fires, not onReconnected).
+          this.isConnecting = false;
+          this.hasEverConnected = false;
+          this.terminalError = true;
+          this.safeInvoke('onError', this.onError, new Error(result.error));
+          return;
+        }
+
+        this.logger.info('ws', `unable to connect to the server after trying ${count} times")`);
+
+        if (reconnectCount >= 0 && count >= reconnectCount) {
+          this.isConnecting = false;
+          this.terminalError = true;
+          this.safeInvoke(
+            'onError',
+            this.onError,
+            new Error(`WebSocket reconnect exhausted after ${count} attempts`),
+          );
+          return;
+        }
+
+        this.reconnectInterval = setTimeout(() => {
+          loopReConnect.bind(this)(count);
+        }, reconnectInterval)
+        this.reconnectInfo.nextConnectTime = Date.now() + reconnectInterval;
+      }).bind(this)(0)
+    }, reconnectNonceTime);
+    this.reconnectInfo.nextConnectTime = Date.now() + reconnectNonceTime;
+  }
+
+  private pingLoop() {
+    const {
+      serviceId,
+      pingInterval
+    } = this.wsConfig.getWS();
+
+    const wsInstance = this.wsConfig.getWSInstance();
+    if (wsInstance?.readyState === WebSocket.OPEN) {
+      const frame: pbbp2.IFrame = {
+        headers: [{
+          key: HeaderKey.type,
+          value: MessageType.ping
+        }],
+        service: Number(serviceId),
+        method: FrameType.control,
+        SeqID: 0,
+        LogID: 0
+      };
+      this.sendMessage(frame);
+      this.armLiveness();
+      this.logger.trace('[ws]', 'ping success');
+    }
+
+    this.pingInterval = setTimeout(this.pingLoop.bind(this), pingInterval);
+  }
+
+  private communicate() {
+    const wsInstance = this.wsConfig.getWSInstance();
+
+    wsInstance?.on('message', async (buffer: Uint8Array) => {
+      // Any inbound frame proves the connection is alive — cancel the pong
+      // watchdog (but don't re-arm; it'll be armed again on the next ping).
+      this.clearLiveness();
+      const data = protoBuf.decode(buffer);
+      const { method } = data;
+
+      if (method === FrameType.control) {
+        await this.handleControlData(data);
+      }
+
+      if (method === FrameType.data) {
+        await this.handleEventData(data);
+      }
+    });
+
+    wsInstance?.on('error', (e) => {
+      this.logger.error('[ws]', 'ws error');
+    });
+
+    wsInstance?.on('close', () => {
+      this.logger.debug('[ws]', 'client closed');
+      this.clearLiveness();
+      this.reConnect();
+    });
+
+  }
+
+  private async handleControlData(data: pbbp2.Frame) {
+    const type = data.headers.find(item => item.key === HeaderKey.type)?.value;
+    const payload = data.payload;
+
+    if (type === MessageType.ping) {
+      return;
+    }
+
+    if (type === MessageType.pong && payload) {
+      this.logger.trace('[ws]', 'receive pong');
+      const dataString = new TextDecoder("utf-8").decode(payload);
+      const {
+        PingInterval,
+        ReconnectCount,
+        ReconnectInterval,
+        ReconnectNonce
+      } = JSON.parse(dataString);
+
+      this.wsConfig.updateWs({
+        pingInterval: PingInterval * 1000,
+        reconnectCount: ReconnectCount,
+        reconnectInterval: ReconnectInterval * 1000,
+        reconnectNonce: ReconnectNonce * 1000,
+      });
+
+      this.logger.trace('[ws]', 'update wsConfig with pong data');
+    }
+  }
+
+  private async handleEventData(data: pbbp2.Frame) {
+    const headers = data.headers.reduce((acc, cur) => {
+      acc[cur.key] = cur.value;
+      return acc;
+    }, {} as Record<HeaderKey, string>);
+    const { message_id, sum, seq, type, trace_id } = headers;
+    const payload = data.payload;
+
+    if (type !== MessageType.event) {
+      return;
+    }
+
+    const mergedData = this.dataCache.mergeData({
+      message_id,
+      sum: Number(sum),
+      seq: Number(seq),
+      trace_id,
+      data: payload
+    });
+
+    if (!mergedData) {
+      return;
+    }
+
+    this.logger.debug('[ws]', `receive message, message_type: ${type}; message_id: ${message_id}; trace_id: ${trace_id}; data: ${mergedData.data}`);
+
+    const respPayload: { code: number, data?: string } = {
+      code: HttpStatusCode.ok,
+    }
+
+    const startTime = Date.now();
+    try {
+      const result = await this.eventDispatcher?.invoke(mergedData, { needCheck: false });
+      if (result) {
+        respPayload.data = Buffer.from(JSON.stringify(result)).toString("base64")
+      }
+    } catch (error) {
+      respPayload.code = HttpStatusCode.internal_server_error;
+      this.logger.error('[ws]', `invoke event failed, message_type: ${type}; message_id: ${message_id}; trace_id: ${trace_id}; error: ${error}`);
+    }
+    const endTime = Date.now();
+
+    this.sendMessage({
+      ...data,
+      headers: [...data.headers, {key: HeaderKey.biz_rt, value: String(startTime - endTime)}],
+      payload: new TextEncoder().encode(JSON.stringify(respPayload))
+    })
+  }
+
+  private sendMessage(data: pbbp2.IFrame) {
+    const wsInstance = this.wsConfig.getWSInstance();
+    if (wsInstance?.readyState === WebSocket.OPEN) {
+      const resp = pbbp2.Frame.encode(data).finish();
+      this.wsConfig.getWSInstance()?.send(resp,(err) => {
+        if (err) {
+          this.logger.error('[ws]', 'send data failed');
+        }
+      });
+    }
+  }
+
+  getReconnectInfo() {
+    return this.reconnectInfo;
+  }
+
+  /**
+   * Snapshot of the current WebSocket lifecycle, derived from internal
+   * flags so callers don't have to subscribe to every transition event.
+   * Cheap to call; no side effects.
+   */
+  getConnectionStatus(): WSConnectionStatus {
+    return {
+      state: this.computeState(),
+      lastConnectTime: this.reconnectInfo.lastConnectTime || undefined,
+      nextConnectTime: this.reconnectInfo.nextConnectTime || undefined,
+      reconnectAttempts: this.currentReconnectAttempts,
+    };
+  }
+
+  private computeState(): WSConnectionState {
+    if (this.terminalError) return 'failed';
+    if (this.isConnecting && !this.hasEverConnected) return 'connecting';
+    if (this.isConnecting && this.hasEverConnected) return 'reconnecting';
+    if (this.wsConfig.getWSInstance()?.readyState === WebSocket.OPEN) return 'connected';
+    return 'idle';
+  }
+
+  /**
+   * close connection
+   * @param params close params
+   * @param params.force whether force close (use terminate instead of close)
+   */
+  close(params: { force?: boolean } = {}) {
+    const { force = false } = params;
+    // Invalidate any in-flight reconnect loops
+    this.reconnectGeneration++;
+    if (this.pingInterval) {
+      clearTimeout(this.pingInterval);
+      this.pingInterval = undefined;
+    }
+    if (this.reconnectInterval) {
+      clearTimeout(this.reconnectInterval);
+      this.reconnectInterval = undefined;
+    }
+    this.clearLiveness();
+    this.dataCache.destroy();
+    this.isConnecting = false;
+    this.currentReconnectAttempts = 0;
+    const wsInstance = this.wsConfig.getWSInstance();
+    if (wsInstance) {
+      wsInstance.removeAllListeners();
+      if (force) {
+        wsInstance.terminate();
+      } else {
+        wsInstance.close();
+      }
+      this.wsConfig.setWSInstance(null);
+    }
+    this.logger.info('[ws]', `ws client closed manually${force ? ' (force)' : ''}`);
+  }
+
+  async start(params: { eventDispatcher: EventDispatcher }) {
+    const { appId } = this.wsConfig.getClient();
+    if (!/^cli_[0-9a-fA-F]{16}$/.test(appId)) {
+      this.logger.error('[ws]', `invalid appId: ${appId}`);
+      return;
+    }
+
+    const { eventDispatcher } = params;
+    if (!eventDispatcher) {
+      this.logger.warn('[ws]', 'client need to start with a eventDispatcher');
+      return;
+    }
+
+    // Clear any terminal-error state left over from a previous session so
+    // getConnectionStatus() reflects the fresh start.
+    this.terminalError = false;
+    this.currentReconnectAttempts = 0;
+    // Re-arm the cache sweep in case the client was previously close()d
+    // (which destroys the timer); idempotent when already running.
+    this.dataCache.clearAtInterval();
+
+    this.logger.info(
+      '[ws]',
+      `receive events or callbacks through persistent connection only available in self-build & Feishu app, Configured in:
+        Developer Console(开发者后台)
+          ->
+        Events and Callbacks(事件与回调)
+          ->
+        Mode of event/callback subscription(订阅方式)
+          ->
+        Receive events/callbacks through persistent connection(使用 长连接 接收事件/回调)`
+    );
+
+    this.eventDispatcher = eventDispatcher;
+    this.reConnect(true);
+  }
+}

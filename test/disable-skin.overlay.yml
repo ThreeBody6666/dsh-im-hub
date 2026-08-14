@@ -1,0 +1,8 @@
+# Test-only overlay for the headless `im` profile: the dsh-skin manager in
+# $DSH_HOME/cordis.patch.yml inserts a UI-skin row (ui-skin-blue-fantasy) that
+# applies to every profile. This headless profile loads no web bundle, so the
+# skin package is not installed. Overlays compose after the home layer, so
+# disabling the row here wins. (Do not edit $DSH_HOME/cordis.patch.yml — the
+# skin manager owns that file.)
+- id: ui-skin-blue-fantasy
+  disabled: true
