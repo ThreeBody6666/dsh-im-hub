@@ -9,9 +9,11 @@
 | awesome-dsh-plugin 收录 | ✅ PR #139 | https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/139 |
 | 0xsline/awesome-deepseek-harness 收录 | ✅ PR #107 | https://github.com/0xsline/awesome-deepseek-harness/pull/107 |
 | Alex-Yanggg/awesome-DSH-plugin 收录 | ✅ PR #34 | https://github.com/Alex-Yanggg/awesome-DSH-plugin/pull/34 |
+| npm 发布 | ✅ `dsh-im-hub@0.1.0` | https://www.npmjs.com/package/dsh-im-hub |
 
 ## 更新记录
 
+- `0.1.0` — npm 发布成功(npm 账号 `crazy_th`);`dsh plugin --profile <name> add dsh-im-hub` 已可用,安装后 mock 适配器端到端验证通过(12×12=144)。
 - `114fec7` — 新增 **Lark 国际版适配器**(`adapters.lark`,open.larksuite.com):与飞书共用同一套长连接/protobuf 实现,仅切换 base URL,零代码重复。
 
 ## 说明
