@@ -1,0 +1,10 @@
+- id: ui-skin-blue-fantasy
+  disabled: true
+
+- id: im-hub
+  disabled: false
+  config:
+    adapters:
+      mock:
+        enabled: true
+        port: 9192
