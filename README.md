@@ -19,10 +19,10 @@ A multi-platform IM gateway plugin for [DeepSeek Harness](https://github.com/dee
 ## Install
 
 ```bash
-# From a Git repo (requires a `prepare` script + build approval) or an npm tarball:
-dsh plugin --profile im add github:yourname/dsh-im-hub
+# From npm (recommended):
+dsh plugin --profile im add dsh-im-hub
 
-# From a local checkout (development):
+# From a Git repo or a local checkout (development):
 dsh plugin --profile im add link:D:/projects/dsh-im-hub
 ```
 
@@ -33,6 +33,17 @@ dsh --profile im
 ```
 
 ## Configure
+
+### Option A — Web GUI settings card (v0.2.0+)
+
+When the plugin runs inside the **Web GUI** (`dsh web` profile), a visual
+configuration card appears at **Settings → Plugins → Configurable plugins →
+IM Gateway (dsh-im-hub)**. It edits the same configuration live — no
+`cordis.patch.yml` hand-editing, no restart needed (the bridge hot-reloads on
+save). Credential fields are stored server-side and shown as write-only
+"configured / not set" badges.
+
+### Option B — YAML (`cordis.patch.yml`)
 
 The plugin row is disabled by default. Enable it from the profile's own `cordis.patch.yml` (`$DSH_HOME/profiles/im/cordis.patch.yml`):
 

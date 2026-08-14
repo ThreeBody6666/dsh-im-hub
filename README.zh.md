@@ -19,8 +19,8 @@
 ## 安装
 
 ```bash
-# 从 Git 仓库安装(需要 prepare 脚本 + 构建授权)或 npm 包:
-dsh plugin --profile im add github:yourname/dsh-im-hub
+# 从 npm 安装(推荐):
+dsh plugin --profile im add dsh-im-hub
 
 # 从本地源码安装(开发调试):
 dsh plugin --profile im add link:D:/projects/dsh-im-hub
@@ -33,6 +33,12 @@ dsh --profile im
 ```
 
 ## 配置
+
+### 方式 A — Web GUI 可视化设置卡片(v0.2.0+)
+
+当插件运行在 **Web GUI**(`dsh web` profile)中时,设置页会出现可视化配置卡片,位置:**设置 → 插件 → 可配置插件 → IM 网关(dsh-im-hub)**。卡片直接编辑同一份配置,保存即热生效(无需改 `cordis.patch.yml`、无需重启)。凭据字段仅存服务端,界面上显示"已配置 / 未设置"徽标,不可回显。
+
+### 方式 B — YAML(`cordis.patch.yml`)
 
 插件行默认禁用。在 profile 自己的 `cordis.patch.yml`(`$DSH_HOME/profiles/im/cordis.patch.yml`)中启用:
 

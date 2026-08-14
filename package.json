@@ -1,7 +1,7 @@
 {
   "name": "dsh-im-hub",
-  "version": "0.1.0",
-  "description": "A multi-platform IM gateway for DeepSeek Harness (dsh) — Feishu (Lark), WeCom (WeChat Work), and Telegram. Turn your dsh agent into a chat assistant reachable from the messaging apps you already use.",
+  "version": "0.2.0",
+  "description": "A multi-platform IM gateway for DeepSeek Harness (dsh) — Feishu (Lark), WeCom (WeChat Work), and Telegram, with a visual settings card in the web GUI. Turn your dsh agent into a chat assistant reachable from the messaging apps you already use.",
   "keywords": [
     "deepseek-harness",
     "dsh",
