@@ -6,7 +6,7 @@
 
 ## 特性
 
-- **飞书** — 官方 WebSocket 长连接(`/callback/ws/endpoint` + protobuf 帧、客户端主动 ping 保活、3 秒事件应答、message_id 幂等去重),或 webhook 模式。默认模式不需要公网地址。
+- **飞书 / Lark** — 官方 WebSocket 长连接(`/callback/ws/endpoint` + protobuf 帧、客户端主动 ping 保活、3 秒事件应答、message_id 幂等去重),或 webhook 模式。默认模式不需要公网地址;国际版 Lark 通过 `adapters.lark` 配置(`open.larksuite.com`)。
 - **企业微信** — 应用消息回调,完整实现 `WXBizMsgCrypt`(AES-256-CBC 解密 + SHA1 验签),并通过消息 API 主动回复。
 - **Telegram** — Bot API 长轮询(`getUpdates`),超长消息自动按 4096 字符分片。
 - **Mock 适配器** — 无需任何真实平台凭据,通过 stdin + 本地 HTTP 端点即可测试。
@@ -60,6 +60,12 @@ dsh --profile im
 | `adapters.feishu.webhookPath` | `'/feishu'` | webhook 模式的 HTTP 路径。 |
 | `adapters.feishu.verificationToken` | `''` | webhook 事件校验 token。 |
 | `adapters.feishu.allowedUserIds` | `[]` | 允许对话的 open_id。 |
+| `adapters.lark.enabled` | `false` | 启用 Lark 国际版适配器(与飞书同一开放平台,`open.larksuite.com`)。 |
+| `adapters.lark.appId` / `appSecret` | `''` | Lark 自定义应用凭据。 |
+| `adapters.lark.mode` | `'websocket'` | `websocket`(官方长连接,无需公网)或 `webhook`。 |
+| `adapters.lark.webhookPath` | `'/lark'` | webhook 模式的 HTTP 路径。 |
+| `adapters.lark.verificationToken` | `''` | webhook 事件校验 token。 |
+| `adapters.lark.allowedUserIds` | `[]` | 允许对话的 open_id。 |
 | `adapters.wecom.enabled` | `false` | 启用企业微信应用消息回调适配器。 |
 | `adapters.wecom.corpId` / `corpSecret` / `agentId` | `''` | 企业微信应用凭据。 |
 | `adapters.wecom.token` / `encodingAesKey` | `''` | 后台「接收消息」配置的 Token / EncodingAESKey。 |
@@ -74,9 +80,9 @@ dsh --profile im
 | `agent.instructionPrefix` | `''` | 附加到每条用户消息前的前缀。 |
 | `http.host` / `http.port` | `0.0.0.0` / `8080` | webhook 模式 HTTP 服务绑定地址(飞书 webhook / 企微回调)。 |
 
-### 飞书前置条件
+### 飞书 / Lark 前置条件
 
-- 在[飞书开放平台](https://open.feishu.cn)创建企业自建应用,订阅 **`im.message.receive_v1`** 事件,并开通消息权限(`im:message:send_as_bot`、`im:message:p2p_msg`、`im:message:group_msg` / `group_at_msg`)。
+- 在[飞书开放平台](https://open.feishu.cn)(国际版用 [Lark Open Platform](https://open.larksuite.com))创建企业自建应用,订阅 **`im.message.receive_v1`** 事件,并开通消息权限(`im:message:send_as_bot`、`im:message:p2p_msg`、`im:message:group_msg` / `group_at_msg`)。
 - 长连接模式仅企业自建应用可用;在开发者后台事件订阅里选择「使用长连接接收事件」,或配置 webhook 请求地址。
 
 ### 企业微信前置条件

@@ -6,7 +6,7 @@ A multi-platform IM gateway plugin for [DeepSeek Harness](https://github.com/dee
 
 ## Highlights
 
-- **Feishu (Lark)** — official WebSocket long connection (`/callback/ws/endpoint` + protobuf frames, client-driven ping keepalive, 3s event ACK, message-id dedup), or webhook mode. No public URL needed for the default mode.
+- **Feishu (Lark)** — official WebSocket long connection (`/callback/ws/endpoint` + protobuf frames, client-driven ping keepalive, 3s event ACK, message-id dedup), or webhook mode. No public URL needed for the default mode. The same adapter also serves the **international Lark** edition (`open.larksuite.com`) via `adapters.lark`.
 - **WeCom (WeChat Work)** — app message callback with full `WXBizMsgCrypt` AES-256-CBC decryption and SHA1 signature verification, plus active replies via the messaging API.
 - **Telegram** — Bot API long polling (`getUpdates`), automatic message splitting at the 4096-char limit.
 - **Mock adapter** — stdin + local HTTP endpoint for testing without any real platform credentials.
@@ -60,6 +60,12 @@ Full configuration reference:
 | `adapters.feishu.webhookPath` | `'/feishu'` | HTTP path for webhook mode. |
 | `adapters.feishu.verificationToken` | `''` | Webhook event verification token. |
 | `adapters.feishu.allowedUserIds` | `[]` | Open ids allowed to talk to the bot. |
+| `adapters.lark.enabled` | `false` | Enable the international Lark adapter (same open platform as Feishu, `open.larksuite.com`). |
+| `adapters.lark.appId` / `appSecret` | `''` | Lark custom app credentials. |
+| `adapters.lark.mode` | `'websocket'` | `websocket` (official long connection, no public URL) or `webhook`. |
+| `adapters.lark.webhookPath` | `'/lark'` | HTTP path for webhook mode. |
+| `adapters.lark.verificationToken` | `''` | Webhook event verification token. |
+| `adapters.lark.allowedUserIds` | `[]` | Open ids allowed to talk to the bot. |
 | `adapters.wecom.enabled` | `false` | Enable the WeCom app-message callback adapter. |
 | `adapters.wecom.corpId` / `corpSecret` / `agentId` | `''` | WeCom app credentials. |
 | `adapters.wecom.token` / `encodingAesKey` | `''` | Callback Token / EncodingAESKey from the WeCom admin console. |
@@ -74,9 +80,9 @@ Full configuration reference:
 | `agent.instructionPrefix` | `''` | Prefix prepended to every user message. |
 | `http.host` / `http.port` | `0.0.0.0` / `8080` | Bind address for webhook-mode HTTP servers (feishu webhook / wecom callback). |
 
-### Feishu prerequisites
+### Feishu / Lark prerequisites
 
-- Create a custom app in the [Feishu Open Platform](https://open.feishu.cn), enable the **`im.message.receive_v1`** event subscription, and grant the message permissions (`im:message:send_as_bot`, `im:message:p2p_msg`, `im:message:group_msg` / `group_at_msg`).
+- Create a custom app in the [Feishu Open Platform](https://open.feishu.cn) (or the [Lark Open Platform](https://open.larksuite.com) for the international edition), enable the **`im.message.receive_v1`** event subscription, and grant the message permissions (`im:message:send_as_bot`, `im:message:p2p_msg`, `im:message:group_msg` / `group_at_msg`).
 - Long-connection mode is available to self-built (enterprise) apps. In the admin console choose **Event subscription → 使用长连接接收事件** (long connection) or configure the webhook URL for webhook mode.
 
 ### WeCom prerequisites
