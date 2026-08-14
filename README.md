@@ -1,5 +1,7 @@
 # dsh-im-hub
 
+**[English](README.md) | [简体中文](README.zh.md)**
+
 A multi-platform IM gateway plugin for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (dsh): connect your dsh agent to **Feishu (Lark)**, **WeCom (WeChat Work)**, and **Telegram**, and chat with it from the messaging apps you already use.
 
 > One agent per chat. Multi-turn context. Whitelist access control. Idle reaping. No public endpoint required (Feishu long connection / Telegram long polling; WeCom uses an HTTP callback).

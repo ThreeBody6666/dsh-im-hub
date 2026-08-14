@@ -1,5 +1,7 @@
 # dsh-im-hub
 
+**[English](README.md) | [简体中文](README.zh.md)**
+
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (dsh) 的多平台 IM 网关插件:把 dsh 智能体接入 **飞书(Lark)**、**企业微信(WeCom)** 和 **Telegram**,让你在平时用的聊天软件里直接和智能体对话。
 
 > 每个会话一个智能体、多轮上下文、白名单访问控制、空闲自动回收。默认无需公网地址(飞书长连接 / Telegram 长轮询;企业微信走 HTTP 回调)。
