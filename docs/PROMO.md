@@ -49,7 +49,7 @@ dsh plugin --profile im add dsh-im-hub
 
 配置示例(profile 的 cordis.patch.yml):
 ```yaml
-- id: im-hub
+- id: dsh-im-hub
   disabled: false
   config:
     adapters:

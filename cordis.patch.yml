@@ -3,7 +3,7 @@
 # The row is disabled by default. Enable it from the profile's own
 # cordis.patch.yml (or a --patch overlay) with your adapter credentials, e.g.:
 #
-#   - id: im-hub
+#   - id: dsh-im-hub
 #     disabled: false
 #     config:
 #       adapters:
@@ -11,10 +11,14 @@
 #           enabled: true
 #           token: '123456:ABC-DEF...'
 #
+# The row id matches the package name (dsh-notification style): the web
+# client-modules scanner keys client bundles by loader entry name, and the
+# row id is what the profile patch addresses.
+#
 # See README.zh.md / README.md for the full configuration reference.
 
 - insert:
-    - id: im-hub
+    - id: dsh-im-hub
       name: 'dsh-im-hub'
       disabled: true
       config: {}

@@ -43,7 +43,7 @@ dsh --profile im
 插件行默认禁用。在 profile 自己的 `cordis.patch.yml`(`$DSH_HOME/profiles/im/cordis.patch.yml`)中启用:
 
 ```yaml
-- id: im-gateway
+- id: dsh-im-hub
   disabled: false
   config:
     adapters:

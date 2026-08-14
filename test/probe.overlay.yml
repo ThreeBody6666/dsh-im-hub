@@ -1,10 +1,11 @@
 - id: ui-skin-blue-fantasy
   disabled: true
 
+# probe: re-point mock to a free port and force im-hub enabled
 - id: dsh-im-hub
   disabled: false
   config:
     adapters:
       mock:
         enabled: true
-        port: 9192
+        port: 9197

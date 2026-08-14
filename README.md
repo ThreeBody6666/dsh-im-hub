@@ -48,7 +48,7 @@ save). Credential fields are stored server-side and shown as write-only
 The plugin row is disabled by default. Enable it from the profile's own `cordis.patch.yml` (`$DSH_HOME/profiles/im/cordis.patch.yml`):
 
 ```yaml
-- id: im-gateway
+- id: dsh-im-hub
   disabled: false
   config:
     adapters:
