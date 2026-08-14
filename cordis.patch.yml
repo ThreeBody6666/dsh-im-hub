@@ -1,9 +1,9 @@
-# dsh-im-gateway bundle patch: insert the IM gateway plugin row.
+# dsh-im-hub bundle patch: insert the IM gateway plugin row.
 #
 # The row is disabled by default. Enable it from the profile's own
 # cordis.patch.yml (or a --patch overlay) with your adapter credentials, e.g.:
 #
-#   - id: im-gateway
+#   - id: im-hub
 #     disabled: false
 #     config:
 #       adapters:
@@ -14,7 +14,7 @@
 # See README.zh.md / README.md for the full configuration reference.
 
 - insert:
-    - id: im-gateway
-      name: 'dsh-im-gateway'
+    - id: im-hub
+      name: 'dsh-im-hub'
       disabled: true
       config: {}

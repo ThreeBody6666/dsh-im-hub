@@ -1,4 +1,4 @@
-# dsh-im-gateway
+# dsh-im-hub
 
 A multi-platform IM gateway plugin for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (dsh): connect your dsh agent to **Feishu (Lark)**, **WeCom (WeChat Work)**, and **Telegram**, and chat with it from the messaging apps you already use.
 
@@ -18,13 +18,13 @@ A multi-platform IM gateway plugin for [DeepSeek Harness](https://github.com/dee
 
 ```bash
 # From a Git repo (requires a `prepare` script + build approval) or an npm tarball:
-dsh plugin --profile im add github:yourname/dsh-im-gateway
+dsh plugin --profile im add github:yourname/dsh-im-hub
 
 # From a local checkout (development):
-dsh plugin --profile im add link:D:/projects/dsh-im-gateway
+dsh plugin --profile im add link:D:/projects/dsh-im-hub
 ```
 
-This creates a headless profile `im` whose bundles are `@deepseek-ai/dsh-base` + `dsh-im-gateway`. Boot it with:
+This creates a headless profile `im` whose bundles are `@deepseek-ai/dsh-base` + `dsh-im-hub`. Boot it with:
 
 ```bash
 dsh --profile im
@@ -116,7 +116,7 @@ IM platform ──(adapter)──► Bridge ──► ctx.agents.create({ sessio
 
 ```bash
 node --test test/                          # unit tests (protobuf frame codec)
-dsh plugin --profile im add link:D:/projects/dsh-im-gateway   # install from checkout
+dsh plugin --profile im add link:D:/projects/dsh-im-hub   # install from checkout
 dsh --profile im --patch test/disable-skin.overlay.yml         # boot with mock adapter
 # POST a message: curl -X POST http://127.0.0.1:9099/mock -H 'content-type: application/json' -d '{"text":"hi","chatId":"test"}'
 ```

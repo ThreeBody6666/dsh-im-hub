@@ -1,4 +1,4 @@
-# dsh-im-gateway
+# dsh-im-hub
 
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (dsh) 的多平台 IM 网关插件:把 dsh 智能体接入 **飞书(Lark)**、**企业微信(WeCom)** 和 **Telegram**,让你在平时用的聊天软件里直接和智能体对话。
 
@@ -18,13 +18,13 @@
 
 ```bash
 # 从 Git 仓库安装(需要 prepare 脚本 + 构建授权)或 npm 包:
-dsh plugin --profile im add github:yourname/dsh-im-gateway
+dsh plugin --profile im add github:yourname/dsh-im-hub
 
 # 从本地源码安装(开发调试):
-dsh plugin --profile im add link:D:/projects/dsh-im-gateway
+dsh plugin --profile im add link:D:/projects/dsh-im-hub
 ```
 
-这会创建一个 headless profile `im`,bundle 为 `@deepseek-ai/dsh-base` + `dsh-im-gateway`。启动:
+这会创建一个 headless profile `im`,bundle 为 `@deepseek-ai/dsh-base` + `dsh-im-hub`。启动:
 
 ```bash
 dsh --profile im
@@ -116,7 +116,7 @@ IM 平台 ──(适配器)──► Bridge ──► ctx.agents.create({ sessio
 
 ```bash
 node --test test/                          # 单元测试(protobuf 帧编解码)
-dsh plugin --profile im add link:D:/projects/dsh-im-gateway   # 从源码安装
+dsh plugin --profile im add link:D:/projects/dsh-im-hub   # 从源码安装
 dsh --profile im --patch test/disable-skin.overlay.yml         # 带 mock 适配器启动
 # 发送消息:curl -X POST http://127.0.0.1:9099/mock -H 'content-type: application/json' -d '{"text":"hi","chatId":"test"}'
 ```
