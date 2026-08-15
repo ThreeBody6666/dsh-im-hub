@@ -1,4 +1,4 @@
-# dsh-im-hub — 发布记录(已完成 ✅)
+# dsh-im-hub — 发布记录
 
 ## 已发布
 
@@ -6,26 +6,28 @@
 |---|---|---|
 | GitHub 主仓库 | ✅ 已创建并推送 | https://github.com/ThreeBody6666/dsh-im-hub |
 | 仓库 topics | ✅ dsh-plugin 等 10 个 | https://github.com/ThreeBody6666/dsh-im-hub |
-| awesome-dsh-plugin 收录 | ✅ PR #139 | https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/139 |
-| 0xsline/awesome-deepseek-harness 收录 | ✅ PR #107 | https://github.com/0xsline/awesome-deepseek-harness/pull/107 |
-| Alex-Yanggg/awesome-DSH-plugin 收录 | ✅ PR #34 | https://github.com/Alex-Yanggg/awesome-DSH-plugin/pull/34 |
-| npm 发布 | ✅ `dsh-im-hub@0.1.0` | https://www.npmjs.com/package/dsh-im-hub |
+| npm 发布 | ✅ `dsh-im-hub@0.2.0` | https://www.npmjs.com/package/dsh-im-hub |
 
-## 更新记录
+## 社区收录 PR（2026-08-15 重新提交）
 
-- `0.1.0` — npm 发布成功(npm 账号 `crazy_th`);`dsh plugin --profile <name> add dsh-im-hub` 已可用,安装后 mock 适配器端到端验证通过(12×12=144)。
-- `114fec7` — 新增 **Lark 国际版适配器**(`adapters.lark`,open.larksuite.com):与飞书共用同一套长连接/protobuf 实现,仅切换 base URL,零代码重复。
+> 第一轮 PR(#139/#107/#34)因**删除 fork 仓库被自动关闭**(未合并,非维护者拒绝)。重新 fork 后已重新提交,本次保留 fork 直到合并。
+
+| 列表 | PR | 状态 |
+|---|---|---|
+| awesome-dsh-plugin | [#321](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/321) | ⏳ 待合并 |
+| 0xsline/awesome-deepseek-harness | [#147](https://github.com/0xsline/awesome-deepseek-harness/pull/147) | ⏳ 待合并 |
+| Alex-Yanggg/awesome-DSH-plugin | [#43](https://github.com/Alex-Yanggg/awesome-DSH-plugin/pull/43) | ⏳ 待合并 |
+
+## 版本历史
+
+- `0.2.0` — **GUI 可视化设置卡片**:host 端显式注入 `settings` 服务注册 `im-hub` namespace + 保存即热重载;client 端 `web-ui.plugin.item` 插槽卡片(8 组字段、双语、secret 只写);README 引导式配置截图;npm 发布。
+- `0.1.0` — 多平台 IM 网关初版(飞书/Lark 长连接、企微加密回调、Telegram 长轮询、mock),npm 发布。
 
 ## 说明
 
-- 3 个收录 PR 均已附带双语描述(英文 README + 中文 README/CATALOG),符合各列表的贡献规范。
+- `dsh plugin --profile <name> add dsh-im-hub` 安装的是最新 0.2.0。
 - Alex-Yanggg 列表的 PR 注明了未在本机运行 `generate_readmes.py`(无 Python),zh-CN 镜像可由维护者运行脚本生成。
-- 仓库 topics 已含 `dsh-plugin`(awesome-dsh-plugin 收录硬性要求)。
-- npm 发布未执行(需 npm 账号);如需 `dsh plugin add dsh-im-hub` 直接可用,再执行:
-  ```bash
-  npm login && npm publish --access public
-  ```
 
 ## 安全提醒
 
-- 发布用的 GitHub PAT 已出现在对话中,请尽快在 GitHub → Settings → Developer settings → Personal access tokens 中 **Revoke**(撤销)该 token。已发布的仓库不受影响。
+- GitHub PAT 与 npm token 已在对话中出现,发布完成后请尽快在对应平台 Revoke。
