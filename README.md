@@ -43,6 +43,24 @@ IM Gateway (dsh-im-hub)**. It edits the same configuration live — no
 save). Credential fields are stored server-side and shown as write-only
 "configured / not set" badges.
 
+### Guided configuration
+
+Every control states its purpose and every empty input includes a safe example.
+Credential values remain write-only: the screenshots below use placeholders,
+not real tokens or secrets.
+
+**Telegram: Bot Token and access whitelist**
+
+![Telegram settings with labels, guidance, and examples](docs/images/settings-guidance-telegram.png)
+
+**Feishu: App ID, App Secret, and Open ID whitelist**
+
+![Feishu settings with labels, guidance, and examples](docs/images/settings-guidance-feishu.png)
+
+**WeCom: enterprise ID, application credentials, and callback Token**
+
+![WeCom settings with labels, guidance, and examples](docs/images/settings-guidance-wecom.png)
+
 ### Option B — YAML (`cordis.patch.yml`)
 
 The plugin row is disabled by default. Enable it from the profile's own `cordis.patch.yml` (`$DSH_HOME/profiles/im/cordis.patch.yml`):
