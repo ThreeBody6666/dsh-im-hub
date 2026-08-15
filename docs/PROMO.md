@@ -23,7 +23,7 @@ https://github.com/ThreeBody6666/dsh-im-hub
 - 🔒 白名单安全:只允许指定的人驱动你的 agent
 - 🎛️ v0.2.0 新增:GUI 可视化设置卡片——浏览器点几下配好,凭据只写不回显,保存即热生效
 
-安装只需一条命令:dsh plugin add dsh-im-hub
+安装只需一条命令:dsh plugin --profile im add dsh-im-hub
 
 ⭐ GitHub:https://github.com/ThreeBody6666/dsh-im-hub
 📦 npm:https://www.npmjs.com/package/dsh-im-hub
@@ -73,7 +73,7 @@ dsh plugin --profile im add dsh-im-hub
 
 New in v0.2.0: a visual settings card in the web GUI — configure from the browser, secrets write-only, save = hot reload.
 
-Install: `dsh plugin add dsh-im-hub`
+Install: `dsh plugin --profile im add dsh-im-hub`
 
 ⭐ github.com/ThreeBody6666/dsh-im-hub
 
@@ -85,7 +85,7 @@ I built dsh-im-hub, an open-source plugin that bridges DeepSeek Harness agents i
 - Per-chat agent sessions with multi-turn context and idle reaping
 - Whitelist access control by design
 - v0.2.0: visual settings card in the DSH web GUI — configure everything from the browser, credentials write-only, save hot-reloads the bridge
-- Install: `dsh plugin add dsh-im-hub`
+- Install: `dsh plugin --profile im add dsh-im-hub`
 
 The Feishu long-connection protocol turned out to be protobuf binary frames with client-driven pings and a 3s event ACK — I wrote a minimal codec for it with zero SDK dependency (tests included). The international Lark edition works too.
 
@@ -97,7 +97,7 @@ Feedback & PRs welcome!
 
 1. 架构图:`IM 平台 ⇄ 适配器 ⇄ Bridge ⇄ Agent 会话(每聊天一个)`
 2. 演示截图:手机聊天软件里与 bot 对话,AI 秒回结果的截图
-3. 安装命令截图:终端 `dsh plugin add dsh-im-hub` 成功输出
+3. 安装命令截图:终端 `dsh plugin --profile im add dsh-im-hub` 成功输出
 4. Logo/仓库卡片:GitHub 仓库的 og:image
 
 ## 🎯 投放渠道建议
