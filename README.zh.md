@@ -1,5 +1,7 @@
 # dsh-im-hub
 
+![npm](https://img.shields.io/npm/v/dsh-im-hub) ![GitHub stars](https://img.shields.io/github/stars/ThreeBody6666/dsh-im-hub) ![license](https://img.shields.io/github/license/ThreeBody6666/dsh-im-hub) ![npm downloads](https://img.shields.io/npm/dm/dsh-im-hub)
+
 **[English](README.md) | [简体中文](README.zh.md)**
 
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (dsh) 的多平台 IM 网关插件:把 dsh 智能体接入 **飞书(Lark)**、**企业微信(WeCom)** 和 **Telegram**,让你在平时用的聊天软件里直接和智能体对话。
