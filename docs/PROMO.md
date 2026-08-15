@@ -1,5 +1,8 @@
 # dsh-im-hub 宣传文案包
 
+> 状态（2026-08-15）：**npm 0.2.0 已发布 + GitHub Release v0.2.0 已创建 + 已收录 3 个社区列表**：
+> [awesome-dsh-plugin #321](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/321)、[0xsline/awesome-deepseek-harness #147](https://github.com/0xsline/awesome-deepseek-harness/pull/147)、[Alex-Yanggg/awesome-DSH-plugin #43](https://github.com/Alex-Yanggg/awesome-DSH-plugin/pull/43)
+
 ## 📣 中文文案
 
 ### 一句话版(微信群 / 朋友圈 / 即刻)
@@ -18,13 +21,15 @@ https://github.com/ThreeBody6666/dsh-im-hub
 - ✈️ Telegram:Bot API 长轮询
 - 💬 一个聊天一个智能体:多轮上下文、消息排队不串线、空闲自动释放
 - 🔒 白名单安全:只允许指定的人驱动你的 agent
+- 🎛️ v0.2.0 新增:GUI 可视化设置卡片——浏览器点几下配好,凭据只写不回显,保存即热生效
 
 安装只需一条命令:dsh plugin add dsh-im-hub
 
 ⭐ GitHub:https://github.com/ThreeBody6666/dsh-im-hub
 📦 npm:https://www.npmjs.com/package/dsh-im-hub
+🏷️ Release:https://github.com/ThreeBody6666/dsh-im-hub/releases/tag/v0.2.0
 
-已提交到 DSH 官方插件社区收录(PR 审核中),欢迎 Star / PR / 提需求!
+已收录进 DSH 插件社区 3 个精选列表(awesome-dsh-plugin / awesome-deepseek-harness / awesome-DSH-plugin),欢迎 Star / PR / 提需求!
 
 ### 详细版(公众号 / CSDN / 知乎专栏)
 
@@ -39,7 +44,7 @@ https://github.com/ThreeBody6666/dsh-im-hub
 3. 怎么做的:Cordis 插件架构、每聊天一个 agent 会话、session/event 流式回传、命令系统(/help /reset /status /model)
 4. 踩坑实录:飞书长连接居然是 protobuf 二进制帧(不是 JSON);客户端要主动发心跳;事件 3 秒内必须 ACK 否则重推;企业微信回调是 AES-256-CBC + SHA1 验签
 5. 实测效果:消息秒级往返,6×7=42、12×12=144 秒回
-6. 怎么用:一条命令安装 + 三行配置(白名单必配!)
+6. 怎么用:一条命令安装 + GUI 可视化配置(v0.2.0 新增,凭据只写不回显,保存即热生效)
 7. 结尾:开源地址 + 求 Star + 求 PR
 
 安装方式:
@@ -66,6 +71,8 @@ dsh plugin --profile im add dsh-im-hub
 
 🚀 dsh-im-hub: turn your DeepSeek Harness agent into an IM assistant — Feishu/Lark (official WebSocket long connection, no public URL needed), WeCom (WeChat Work), and Telegram. One agent per chat, whitelist access, idle reaping.
 
+New in v0.2.0: a visual settings card in the web GUI — configure from the browser, secrets write-only, save = hot reload.
+
 Install: `dsh plugin add dsh-im-hub`
 
 ⭐ github.com/ThreeBody6666/dsh-im-hub
@@ -77,9 +84,12 @@ I built dsh-im-hub, an open-source plugin that bridges DeepSeek Harness agents i
 - Official APIs only — Feishu WebSocket long connection (no public endpoint needed), WeCom AES-encrypted callbacks, Telegram long polling
 - Per-chat agent sessions with multi-turn context and idle reaping
 - Whitelist access control by design
+- v0.2.0: visual settings card in the DSH web GUI — configure everything from the browser, credentials write-only, save hot-reloads the bridge
 - Install: `dsh plugin add dsh-im-hub`
 
 The Feishu long-connection protocol turned out to be protobuf binary frames with client-driven pings and a 3s event ACK — I wrote a minimal codec for it with zero SDK dependency (tests included). The international Lark edition works too.
+
+Now listed in 3 community awesome lists (awesome-dsh-plugin, awesome-deepseek-harness, awesome-DSH-plugin).
 
 Feedback & PRs welcome!
 
