@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1280px; height: 640px; background: linear-gradient(135deg, #0d1117 0%, #161b22 60%, #1f2937 100%); font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; color: #e6edf3; overflow: hidden; position: relative; }
+  .container { padding: 64px 72px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+  .badge-row { display: flex; gap: 16px; align-items: center; }
+  .badge { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); padding: 8px 18px; border-radius: 999px; font-size: 18px; color: #a5d6ff; }
+  .title { font-size: 64px; font-weight: 800; letter-spacing: -1px; margin-top: 28px; }
+  .title .accent { color: #4da3ff; }
+  .tagline { font-size: 28px; color: #9ca3af; margin-top: 18px; line-height: 1.5; }
+  .platforms { display: flex; gap: 14px; margin-top: 36px; flex-wrap: wrap; }
+  .platform { background: rgba(77,163,255,0.12); border: 1px solid rgba(77,163,255,0.35); color: #7cc0ff; padding: 10px 22px; border-radius: 12px; font-size: 22px; font-weight: 600; }
+  .footer { display: flex; justify-content: space-between; align-items: flex-end; }
+  .install { font-family: 'Consolas', monospace; font-size: 24px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); padding: 14px 24px; border-radius: 10px; color: #7ee787; }
+  .link { font-size: 22px; color: #8b949e; }
+  .glow { position: absolute; width: 500px; height: 500px; border-radius: 50%; filter: blur(120px); opacity: 0.35; }
+  .g1 { background: #1f6feb; top: -200px; right: -100px; }
+  .g2 { background: #8250df; bottom: -250px; left: -150px; }
+</style>
+</head>
+<body>
+  <div class="glow g1"></div><div class="glow g2"></div>
+  <div class="container">
+    <div>
+      <div class="badge-row">
+        <span class="badge">🚀 npm v0.2.0</span>
+        <span class="badge">✅ 3 community lists</span>
+        <span class="badge">🖥️ GUI settings card</span>
+      </div>
+      <div class="title">dsh-<span class="accent">im-hub</span></div>
+      <div class="tagline">Turn your DeepSeek Harness agent into an IM assistant.<br>Chat with AI from the apps you already use every day.</div>
+      <div class="platforms">
+        <span class="platform">Feishu 飞书</span>
+        <span class="platform">Lark</span>
+        <span class="platform">WeCom 企业微信</span>
+        <span class="platform">Telegram</span>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="install">$ dsh plugin add dsh-im-hub</div>
+      <div class="link">github.com/ThreeBody6666/dsh-im-hub</div>
+    </div>
+  </div>
+</body>
+</html>
