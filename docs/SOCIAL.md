@@ -29,7 +29,7 @@
 
 安装只需一条命令：
 ```bash
-dsh plugin add dsh-im-hub
+dsh plugin --profile im add dsh-im-hub
 ```
 
 🔗 GitHub：https://github.com/ThreeBody6666/dsh-im-hub
@@ -72,7 +72,7 @@ dsh plugin --profile im add dsh-im-hub
 
 New in v0.2.0: a visual settings card in the DSH web GUI — configure from the browser, secrets write-only, save = hot reload.
 
-Install: `dsh plugin add dsh-im-hub`
+Install: `dsh plugin --profile im add dsh-im-hub`
 🔗 github.com/ThreeBody6666/dsh-im-hub
 
 #DeepSeek #OpenSource #AIAgents #Telegram #Feishu
@@ -87,7 +87,7 @@ I built dsh-im-hub, an open-source plugin that bridges DeepSeek Harness agents i
 - Per-chat agent sessions with multi-turn context and idle reaping
 - Whitelist access control by design
 - v0.2.0: visual settings card in the DSH web GUI — configure everything from the browser, credentials write-only, save hot-reloads the bridge
-- Install: `dsh plugin add dsh-im-hub`
+- Install: `dsh plugin --profile im add dsh-im-hub`
 
 The Feishu long-connection protocol turned out to be protobuf binary frames with client-driven pings and a 3s event ACK — I wrote a minimal codec for it with zero SDK dependency (tests included). The international Lark edition works too.
 
@@ -106,7 +106,7 @@ I built a plugin that lets you chat with your DeepSeek Harness agent from Feishu
 
 v0.2.0 adds a visual settings card in the DSH web GUI — configure everything from the browser, secrets are write-only, saving hot-reloads the bridge.
 
-Install: `dsh plugin add dsh-im-hub`
+Install: `dsh plugin --profile im add dsh-im-hub`
 Repo: https://github.com/ThreeBody6666/dsh-im-hub
 Release: https://github.com/ThreeBody6666/dsh-im-hub/releases/tag/v0.2.0
 
