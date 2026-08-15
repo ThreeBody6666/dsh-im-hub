@@ -1,5 +1,7 @@
 # dsh-im-hub
 
+![npm](https://img.shields.io/npm/v/dsh-im-hub) ![GitHub stars](https://img.shields.io/github/stars/ThreeBody6666/dsh-im-hub) ![license](https://img.shields.io/github/license/ThreeBody6666/dsh-im-hub) ![npm downloads](https://img.shields.io/npm/dm/dsh-im-hub)
+
 **[English](README.md) | [简体中文](README.zh.md)**
 
 A multi-platform IM gateway plugin for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (dsh): connect your dsh agent to **Feishu (Lark)**, **WeCom (WeChat Work)**, and **Telegram**, and chat with it from the messaging apps you already use.
